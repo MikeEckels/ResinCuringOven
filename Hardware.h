@@ -11,7 +11,7 @@ void PinA()
   reading = PIND & 0xC; 
   if(reading == B00001100 && aFlag)
   { 
-    encoderPos = (encoderPos - 15 < 0) ? 0 : encoderPos - 15; 
+    encoderPos = (encoderPos - 15 < 15) ? 15 : encoderPos - 15; 
     bFlag = 0; 
     aFlag = 0; 
   }

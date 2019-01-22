@@ -1,4 +1,3 @@
-
 #include "Hardware.h"
 #include "Menu.h"
 #include <math.h>
@@ -12,9 +11,9 @@ static unsigned char sensorPin = A1;
 static unsigned char FanPin    = 8;
 static unsigned char MotorPin  = 9;
 static unsigned char Other     = 10;
-static unsigned char ledPin    = 11;
+static unsigned char UVLedPin  = 11;
 static unsigned char HeaterPin = 12;
-static unsigned char Led       = 13;
+static unsigned char LedPanel  = 6;
 
 unsigned char desiredTemp = 60;
 unsigned int desiredTime  = 0;
@@ -29,7 +28,7 @@ const int loopTime = 200;//milliseconds
 
 KalmanFilter tempKF       = KalmanFilter(0.25, 25);
 KalmanFilter heatOutputKF = KalmanFilter(0.1, 50);
-PID heaterPWMPID          = PID(1, 0, 0.25);
+PID heaterPWMPID          = PID(255, 0, 0);
 WatchDog heaterWatch      = WatchDog(10, 100, 10);
 
 void(* ResetArduino) (void) = 0;
@@ -41,17 +40,17 @@ void setup()
   pinMode(FanPin,    OUTPUT);
   pinMode(HeaterPin, OUTPUT);
   pinMode(MotorPin,  OUTPUT);
-  pinMode(ledPin,    OUTPUT);
+  pinMode(UVLedPin,  OUTPUT);
   pinMode(Other,     OUTPUT);
-  pinMode(Led,       OUTPUT);
+  pinMode(LedPanel,  OUTPUT);
   pinMode(4,         INPUT_PULLUP);
 
-  digitalWrite(FanPin,    HIGH);
-  digitalWrite(HeaterPin, LOW);
+  digitalWrite(FanPin,    HIGH);//Relay controls are inverted logic
   digitalWrite(MotorPin,  HIGH);
-  digitalWrite(ledPin,    HIGH);
+  digitalWrite(UVLedPin,  HIGH);
   digitalWrite(Other,     HIGH);
-  digitalWrite(Led,       LOW);
+  digitalWrite(HeaterPin, LOW);//SSR
+  digitalWrite(LedPanel,  LOW);
   
   attachInterrupt(0, PinA, RISING);
   attachInterrupt(1, PinB, RISING);
@@ -60,15 +59,7 @@ void setup()
 
   SetTimeTemp();
 
-  while (!digitalRead(4))//button click
-  { 
-    SetLCDDisplay("Running...", "Begin preheat.");
-    delay(2000);
-  }
-
   Preheat();
-  
-  digitalWrite(MotorPin, LOW);
 
   startMillis = millis();
   previousMillis = millis();
@@ -84,14 +75,33 @@ void loop()
     
     unsigned long currentMillis = millis();
     float dT = (currentMillis - previousMillis) / 1000.0;
+
+    float pwmOut = heaterPWMPID.Calculate(desiredTemp, currentTemp, dT);
       
-    byte heatOutput = constrain((int)heaterPWMPID.Calculate(desiredTemp, currentTemp, dT), 0, 255);
+    byte heatOutput = constrain((int)pwmOut, 0, 255);
+    analogWrite(LedPanel, heatOutput);
+
+    Serial.print("Heat: ");
+    Serial.println(heatOutput);
+
+    Serial.print("DT: ");
+    Serial.println(dT);
+
+    Serial.print("TempT: ");
+    Serial.println(desiredTemp);
+    
+    Serial.print("TempA: ");
+    Serial.println(currentTemp);
+    
+    Serial.print("PWMF: ");
+    Serial.println(pwmOut);
       
     analogWrite(HeaterPin, heatOutput);//Set SSR PWM duty cycle
       
-    DISABLE = heaterWatch.Check((float)heatOutput / 255.0f, currentTemp);
+    //DISABLE = heaterWatch.Check((float)heatOutput / 255.0f, currentTemp);
+    DISABLE = false;
     
-    SetLCDDisplay("Curing...", "C:" + String(currentTemp, 1) + " M:" + String(desiredTime - minutesRan));
+    SetLCDDisplay("Curing...", String(currentTemp, 1) + "C " + String(desiredTime - minutesRan) + " Mins");
     
     previousMillis = currentMillis;
     
@@ -113,39 +123,53 @@ void loop()
 }
 
 void SetLCDDisplay(String line1, String line2){
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print(line1);
-  lcd.setCursor(0,1);
-  lcd.print(line2);
+  if(line1.length() <= 16 && line2.length() <= 16){
+    for(int i = line1.length(); i < 15; i++){
+      line1 += " ";
+    }
+    
+    for(int i = line2.length(); i < 15; i++){
+      line2 += " ";
+    }
+    
+    lcd.setCursor(0,0);
+    lcd.print(line1);
+    lcd.setCursor(0,1);
+    lcd.print(line2);
+  }
+  else{
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Fail");
+  }
 }
 
 void Preheat(){
   bool preheating = true;
   
   digitalWrite(HeaterPin, HIGH);
+  digitalWrite(MotorPin, LOW);
+  digitalWrite(FanPin, LOW);
+  digitalWrite(LedPanel, HIGH);
 
   WatchDog preHeatWatch = WatchDog(10, 100, 10);
   
   while(preheating){
     float currentTemp = tempKF.Filter((float)Thermistor(analogRead(sensorPin)));
-    SetLCDDisplay("Preheating:", "Temp: " + String(currentTemp, 1));
+    SetLCDDisplay("Preheating:", "Temp: " + String(currentTemp, 1) + "C");
     preheating = currentTemp < desiredTemp;
     
-    DISABLE = preHeatWatch.Check(1.0f, currentTemp);
+    DISABLE = false;//preHeatWatch.Check(1.0f, currentTemp);
 
     if(DISABLE) break;
     
-    if(preheating){
+    if(!preheating){
       SetLCDDisplay("Preheat done.", "Cure starting.");
-      
-      digitalWrite(Led, HIGH);
-      digitalWrite(MotorPin, LOW);
       
       delay(1500);
     }
     else{
-      delay(200);
+      delay(500);
     }
   }
 
@@ -160,15 +184,9 @@ void SetTimeTemp(){
   delay(500);//debounce delay NEED THIS
   desiredTime = selectTime();
 
-  lcd.setCursor(0, 0);
-  lcd.print("Temp:");
-  lcd.print(desiredTemp);
+  SetLCDDisplay("Temp: " + String(desiredTemp) + "C", "Time: " + String(desiredTime) + " Mins");
 
-  lcd.setCursor(0, 1);
-  lcd.print("Time:");
-  lcd.print(desiredTime);
-
-  delay(500);
+  delay(2000);
 }
 
 void WatchDogSink(){
@@ -182,7 +200,7 @@ void WatchDogSink(){
 
 void TurnOff(){
     digitalWrite(HeaterPin, LOW);
-    digitalWrite(Led, LOW);
-    digitalWrite(ledPin, LOW);
+    digitalWrite(LedPanel, LOW);
+    digitalWrite(UVLedPin, HIGH);
     digitalWrite(MotorPin, HIGH);
 }

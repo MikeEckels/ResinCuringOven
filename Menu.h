@@ -18,7 +18,7 @@ unsigned char selectTemp()
     {
       temp = 80;
       lcd.setCursor(0,1);
-      lcd.print(temp);
+      lcd.print(String(temp) + "C");
       
       if(digitalRead(4) == false) selectedTemp = true;
     }
@@ -26,7 +26,7 @@ unsigned char selectTemp()
     {
       temp = 60;
       lcd.setCursor(0,1);
-      lcd.print(temp);
+      lcd.print(String(temp) + "C");
 
       if(digitalRead(4) == false) selectedTemp = true;
     }
@@ -36,7 +36,7 @@ unsigned char selectTemp()
 
 int selectTime()
 {
-  int Time = 0;
+  int Time = 15;
   
   lcd.setCursor(0,0);
   lcd.print("Select Time:");
@@ -45,11 +45,15 @@ int selectTime()
   {
     Time = Encoder(0);
 
+    if(Time == 0){
+      Time = 15;
+    }
+
     String temp = "";
 
     temp += Time;
-    temp += "         ";
-    
+    temp += " Mins  ";
+
     lcd.setCursor(0,1);
     lcd.print(temp);
     delay(100);
