@@ -5,18 +5,17 @@
 #include "KalmanFilter.h"
 #include "WatchDog.h"
 
-static unsigned char pinA      = 2;
-static unsigned char pinB      = 3;
-static unsigned char sensorPin = A1;
-static unsigned char FanPin    = 8;
-static unsigned char MotorPin  = 9;
-static unsigned char Other     = 10;
-static unsigned char UVLedPin  = 11;
-static unsigned char HeaterPin = 12;
-static unsigned char LedPanel  = 6;
+static unsigned int sensorPin = A1;
+static unsigned int FanPin    = 8;
+static unsigned int MotorPin  = 9;
+static unsigned int Other     = 10;
+static unsigned int UVLedPin  = 11;
+static unsigned int HeaterPin = 12;
+static unsigned int LedPanel  = 6;
 
-unsigned char desiredTemp = 60;
+unsigned int desiredTemp = 0;
 unsigned int desiredTime  = 0;
+
 bool DISABLE = false;
 bool RUNNING = true;
 
@@ -35,15 +34,15 @@ void(* ResetArduino) (void) = 0;
 
 void setup()
 {
-  pinMode(pinA,      INPUT_PULLUP);
-  pinMode(pinB,      INPUT_PULLUP);
-  pinMode(FanPin,    OUTPUT);
-  pinMode(HeaterPin, OUTPUT);
-  pinMode(MotorPin,  OUTPUT);
-  pinMode(UVLedPin,  OUTPUT);
-  pinMode(Other,     OUTPUT);
-  pinMode(LedPanel,  OUTPUT);
-  pinMode(4,         INPUT_PULLUP);
+  pinMode(FanPin,     OUTPUT);
+  pinMode(HeaterPin,  OUTPUT);
+  pinMode(MotorPin,   OUTPUT);
+  pinMode(UVLedPin,   OUTPUT);
+  pinMode(Other,      OUTPUT);
+  pinMode(LedPanel,   OUTPUT);
+  pinMode(4,          INPUT_PULLUP);//Encoder Button
+  pinMode(2,          INPUT_PULLUP);//Encoder pinA
+  pinMode(3,          INPUT_PULLUP);//Encoder pinB
 
   digitalWrite(FanPin,    HIGH);//Relay controls are inverted logic
   digitalWrite(MotorPin,  HIGH);
@@ -52,8 +51,8 @@ void setup()
   digitalWrite(HeaterPin, LOW);//SSR
   digitalWrite(LedPanel,  LOW);
   
-  attachInterrupt(0, PinA, RISING);
-  attachInterrupt(1, PinB, RISING);
+  attachInterrupt(0, PinA, CHANGE);
+  attachInterrupt(1, PinB, CHANGE);
 
   Serial.begin(115200);
 
@@ -80,22 +79,6 @@ void loop()
       
     byte heatOutput = constrain((int)pwmOut, 0, 255);
     analogWrite(LedPanel, heatOutput);
-
-    Serial.print("Heat: ");
-    Serial.println(heatOutput);
-
-    Serial.print("DT: ");
-    Serial.println(dT);
-
-    Serial.print("TempT: ");
-    Serial.println(desiredTemp);
-    
-    Serial.print("TempA: ");
-    Serial.println(currentTemp);
-    
-    Serial.print("PWMF: ");
-    Serial.println(pwmOut);
-      
     analogWrite(HeaterPin, heatOutput);//Set SSR PWM duty cycle
       
     //DISABLE = heaterWatch.Check((float)heatOutput / 255.0f, currentTemp);
@@ -165,6 +148,7 @@ void Preheat(){
     
     if(!preheating){
       SetLCDDisplay("Preheat done.", "Cure starting.");
+      digitalWrite(UVLedPin, LOW);
       
       delay(1500);
     }
@@ -203,4 +187,5 @@ void TurnOff(){
     digitalWrite(LedPanel, LOW);
     digitalWrite(UVLedPin, HIGH);
     digitalWrite(MotorPin, HIGH);
+    digitalWrite(FanPin, HIGH);
 }

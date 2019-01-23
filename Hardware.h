@@ -1,58 +1,66 @@
-volatile byte aFlag = 0;
-volatile byte bFlag = 0; 
-volatile int encoderPos = 0; 
-volatile int oldEncPos = 0; 
-volatile byte reading = 0; 
-volatile byte currentPos = 0;
 
-void PinA()
-{
-  cli();
-  reading = PIND & 0xC; 
-  if(reading == B00001100 && aFlag)
-  { 
-    encoderPos = (encoderPos - 15 < 15) ? 15 : encoderPos - 15; 
-    bFlag = 0; 
-    aFlag = 0; 
+unsigned int lastPos = 1;
+static boolean rotating = false;       
+volatile unsigned int encoderPos = 0;
+
+boolean A_set = false;
+boolean B_set = false;
+
+void PinA() {
+  if ( rotating ) delay (1);
+
+  if ( digitalRead(2) != A_set ) {
+    A_set = !A_set;
+
+    // adjust counter + if A leads B
+    if ( A_set && !B_set )
+      encoderPos = (encoderPos + 15 > 120) ? 120 : encoderPos + 15;
+
+    rotating = false;
   }
-  else if (reading == B00000100) bFlag = 1; 
-  sei();
 }
 
-void PinB()
-{
-  cli();
-  reading = PIND & 0xC;
-  if (reading == B00001100 && bFlag) 
-  {
-    encoderPos = (encoderPos + 15 > 120) ? 120 : encoderPos + 15; 
-    bFlag = 0;
-    aFlag = 0;
+void PinB() {
+  if ( rotating ) delay (1);
+  if ( digitalRead(3) != B_set ) {
+    B_set = !B_set;
+    
+    //  adjust counter - 1 if B leads A
+    if ( B_set && !A_set )
+      encoderPos = (encoderPos - 15 < 15) ? 15 : encoderPos - 15;
+
+    rotating = false;
   }
-  else if (reading == B00001000) aFlag = 1;
-  sei();
 }
 
-int Encoder(bool dir)
-{ //1 to output direction. 0 to output position
+int Encoder(bool dir)//Dir of 1 returns dirction (1 or 0). Dir of 0 returns encoder index
+{
   static int state = 0;
-  if(dir == 1)
+  rotating = true;  // reset the debouncer
+
+  if (dir == 0)
   {
-    if(encoderPos > oldEncPos) 
+    if (lastPos != encoderPos)
     {
-      state = 1;
-    }else if (encoderPos < oldEncPos)
-    {
-      state = 0;
+      Serial.print("Index:");
+      Serial.println(encoderPos);
+      state = encoderPos;
     }
   }else
   {
-    if(encoderPos != oldEncPos)
+    if(encoderPos > lastPos) 
     {
-      state = encoderPos;
+      Serial.print("Direction:");
+      Serial.println("RIGHT");
+      state = 1;
+    }else if (encoderPos < lastPos)
+    {
+      Serial.print("Direction:");
+      Serial.println("LEFT");
+      state = 0;
     }
   }
-  oldEncPos = encoderPos;
+  lastPos = encoderPos;
   return(state);
 }
 

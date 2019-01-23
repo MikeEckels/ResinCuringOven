@@ -5,9 +5,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 bool selectedTemp = 0;
 bool selectedTime = 0;
 
-unsigned char selectTemp()
+unsigned int selectTemp()
 {
-  unsigned char temp = 60; 
+  unsigned int temp = 0; 
 
   lcd.setCursor(0,0);
   lcd.print("Select Temp:");
@@ -36,28 +36,28 @@ unsigned char selectTemp()
 
 int selectTime()
 {
-  int Time = 15;
+  int Time = 0;
   
   lcd.setCursor(0,0);
   lcd.print("Select Time:");
   
   while (selectedTime == false)
   {
+    
     Time = Encoder(0);
 
-    if(Time == 0){
+    if(Time <= 0){
       Time = 15;
     }
 
-    String temp = "";
+    String val = "";
 
-    temp += Time;
-    temp += " Mins  ";
+    val += Time;
+    val += " Mins  ";
 
     lcd.setCursor(0,1);
-    lcd.print(temp);
+    lcd.print(val);
     delay(100);
-    Serial.println(Time);
 
     if(digitalRead(4) == false) selectedTime = true;
   }
