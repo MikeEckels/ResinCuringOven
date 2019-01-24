@@ -34,9 +34,9 @@ unsigned int selectTemp()
   return (temp);
 }
 
-int selectTime()
+unsigned int selectTime()
 {
-  int Time = 0;
+  unsigned int Time = 0;
   
   lcd.setCursor(0,0);
   lcd.print("Select Time:");

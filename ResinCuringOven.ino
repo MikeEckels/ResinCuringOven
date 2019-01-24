@@ -95,7 +95,7 @@ void loop()
   else{
     TurnOff();
     
-    while (!digitalRead(4))//button click
+    while (digitalRead(4))//button click
     { 
       SetLCDDisplay("Finished...", "Click to reset.");
       delay(loopTime);
@@ -123,7 +123,7 @@ void SetLCDDisplay(String line1, String line2){
   else{
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print("Fail");
+    lcd.print("LCD Char Limit");
   }
 }
 
@@ -168,6 +168,8 @@ void SetTimeTemp(){
   delay(500);//debounce delay NEED THIS
   desiredTime = selectTime();
 
+  Serial.print("Temp: " + String(desiredTemp) + "C");
+  Serial.print(" Time: " + String(desiredTime) + " Mins");
   SetLCDDisplay("Temp: " + String(desiredTemp) + "C", "Time: " + String(desiredTime) + " Mins");
 
   delay(2000);

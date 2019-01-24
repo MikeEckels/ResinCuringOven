@@ -1,4 +1,7 @@
 
+unsigned int minVal = 15;
+unsigned int maxVal = 120;
+unsigned int stepVal = 15;
 unsigned int lastPos = 1;
 static boolean rotating = false;       
 volatile unsigned int encoderPos = 0;
@@ -14,7 +17,7 @@ void PinA() {
 
     // adjust counter + if A leads B
     if ( A_set && !B_set )
-      encoderPos = (encoderPos + 15 > 120) ? 120 : encoderPos + 15;
+      encoderPos = (encoderPos + minVal > maxVal) ? maxVal : encoderPos + stepVal;
 
     rotating = false;
   }
@@ -27,15 +30,15 @@ void PinB() {
     
     //  adjust counter - 1 if B leads A
     if ( B_set && !A_set )
-      encoderPos = (encoderPos - 15 < 15) ? 15 : encoderPos - 15;
+      encoderPos = (encoderPos - minVal < minVal) ? minVal : encoderPos - stepVal;
 
     rotating = false;
   }
 }
 
-int Encoder(bool dir)//Dir of 1 returns dirction (1 or 0). Dir of 0 returns encoder index
+unsigned int Encoder(bool dir)//Dir of 1 returns dirction (1 or 0). Dir of 0 returns encoder index
 {
-  static int state = 0;
+  static unsigned int state = 0;
   rotating = true;  // reset the debouncer
 
   if (dir == 0)
@@ -52,7 +55,7 @@ int Encoder(bool dir)//Dir of 1 returns dirction (1 or 0). Dir of 0 returns enco
     {
       Serial.print("Direction:");
       Serial.println("RIGHT");
-      state = 1;
+      state = minVal;
     }else if (encoderPos < lastPos)
     {
       Serial.print("Direction:");
