@@ -141,10 +141,12 @@ void Preheat(){
     float currentTemp = tempKF.Filter((float)Thermistor(analogRead(sensorPin)));
     SetLCDDisplay("Preheating:", "Temp: " + String(currentTemp, 1) + "C");
     preheating = currentTemp < desiredTemp;
-    
-    DISABLE = false;//preHeatWatch.Check(1.0f, currentTemp);
 
-    if(DISABLE) break;
+    Serial.print("Starting T:"); Serial.print(currentTemp); Serial.print(" D: "); Serial.println(desiredTemp);
+    
+    DISABLE = preHeatWatch.Check(1.0f, currentTemp);
+    
+    Serial.print("Disable: "); Serial.println(DISABLE);
     
     if(!preheating){
       SetLCDDisplay("Preheat done.", "Cure starting.");
@@ -155,9 +157,9 @@ void Preheat(){
     else{
       delay(500);
     }
-  }
 
-  WatchDogSink();
+    WatchDogSink();
+  }
 }
 
 void SetTimeTemp(){

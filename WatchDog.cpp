@@ -14,11 +14,13 @@ WatchDog::WatchDog(int timeCheck, int maxTemp, int maxDifference){
   this->maxDifference = maxDifference;
   previousMillis = millis();
   currentTimes = 0;
+
+  this->temperatures = new float[10];
 }
 
 bool WatchDog::Check(double powerRatio, double temperature){
   unsigned long currentMillis = millis();
-  bool watchDog = true;//everything is good
+  bool watchDog = false;//everything is good
 
   //every second shift values
   if(currentMillis - previousMillis > 1000){
@@ -32,10 +34,13 @@ bool WatchDog::Check(double powerRatio, double temperature){
     }
 
     previousMillis = currentMillis;
+
+    Serial.print("CT: "); Serial.print(currentTimes); Serial.print(" TC: "); Serial.println(timeCheck);
   }
 
   //at least 10 seconds of data collected
   if(currentTimes == timeCheck){
+    
     float avgDif = 0.0f;
 
     //get average difference in temperatures
@@ -53,9 +58,13 @@ bool WatchDog::Check(double powerRatio, double temperature){
       watchDog = avgDif < 5.0;
     }
 
+    Serial.print("AVG DIF: "); Serial.println(avgDif);
+    Serial.print("Temperature: "); Serial.println(temperature);
+    Serial.print("Power Ratio: "); Serial.println(powerRatio);
+
     //temperature is past maximum overshoot
     if(temperature - maxDifference > maxTemp){
-      watchDog = false;
+      watchDog = true;
     }
   }
 

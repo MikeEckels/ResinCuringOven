@@ -9,6 +9,10 @@ volatile unsigned int encoderPos = 0;
 boolean A_set = false;
 boolean B_set = false;
 
+void ResetEncoder(){
+  encoderPos = 0;
+}
+
 void PinA() {
   if ( rotating ) delay (1);
 
@@ -29,7 +33,7 @@ void PinB() {
     B_set = !B_set;
     
     //  adjust counter - 1 if B leads A
-    if ( B_set && !A_set )
+    if ( B_set && !A_set && ((int)encoderPos - (int)stepVal) > 0)
       encoderPos = (encoderPos - minVal < minVal) ? minVal : encoderPos - stepVal;
 
     rotating = false;
@@ -45,21 +49,21 @@ unsigned int Encoder(bool dir)//Dir of 1 returns dirction (1 or 0). Dir of 0 ret
   {
     if (lastPos != encoderPos)
     {
-      Serial.print("Index:");
-      Serial.println(encoderPos);
+      //Serial.print("Index:");
+      //Serial.println(encoderPos);
       state = encoderPos;
     }
   }else
   {
     if(encoderPos > lastPos) 
     {
-      Serial.print("Direction:");
-      Serial.println("RIGHT");
+      //Serial.print("Direction:");
+      //Serial.println("RIGHT");
       state = minVal;
     }else if (encoderPos < lastPos)
     {
-      Serial.print("Direction:");
-      Serial.println("LEFT");
+      //Serial.print("Direction:");
+      //Serial.println("LEFT");
       state = 0;
     }
   }

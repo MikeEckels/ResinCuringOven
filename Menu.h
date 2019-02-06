@@ -30,6 +30,8 @@ unsigned int selectTemp()
 
       if(digitalRead(4) == false) selectedTemp = true;
     }
+      
+    //ResetEncoder();
   }
   return (temp);
 }
@@ -46,8 +48,10 @@ unsigned int selectTime()
     
     Time = Encoder(0);
 
+    //Serial.print("Time:"); Serial.println(Time);
+
     if(Time <= 0){
-      Time = 15;
+      Time += 15;
     }
 
     String val = "";
