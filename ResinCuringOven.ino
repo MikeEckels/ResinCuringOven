@@ -81,8 +81,8 @@ void loop()
     analogWrite(LedPanel, heatOutput);
     analogWrite(HeaterPin, heatOutput);//Set SSR PWM duty cycle
       
-    //DISABLE = heaterWatch.Check((float)heatOutput / 255.0f, currentTemp);
-    DISABLE = false;
+    DISABLE = heaterWatch.Check((float)heatOutput / 255.0f, currentTemp);
+    //DISABLE = false;
     
     SetLCDDisplay("Curing...", String(currentTemp, 1) + "C " + String(desiredTime - minutesRan) + " Mins");
     

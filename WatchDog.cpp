@@ -22,8 +22,8 @@ bool WatchDog::Check(double powerRatio, double temperature){
   unsigned long currentMillis = millis();
   bool watchDog = false;//everything is good
 
-  //every second shift values
-  if(currentMillis - previousMillis > 1000){
+  //every five seconds shift values
+  if(currentMillis - previousMillis > 5000){
     
     if(currentTimes < timeCheck){
       temperatures[currentTimes++] = temperature;
@@ -52,10 +52,13 @@ bool WatchDog::Check(double powerRatio, double temperature){
 
     //power is greater than 75%, expect at least an average of 0.1deg climb per second
     if(powerRatio > 0.75 && temperature < maxTemp){
-      watchDog = avgDif > 0.1;
+      watchDog = avgDif < -1.0;
+    }
+    else if(powerRatio > 0.9 && temperature < maxTemp - 10.0f){//initial heating
+      watchDog = avgDif < 0.1;
     }
     else{//if temperature is climbing more than 5.0 degrees per second, disable
-      watchDog = avgDif < 5.0;
+      watchDog = avgDif > 5.0;
     }
 
     Serial.print("AVG DIF: "); Serial.println(avgDif);
