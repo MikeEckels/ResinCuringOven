@@ -4,6 +4,9 @@
 #include "PID.h"
 #include "KalmanFilter.h"
 #include "WatchDog.h"
+#include "Adafruit_MCP9808.h"
+
+Adafruit_MCP9808 tempSensor = Adafruit_MCP9808();
 
 static unsigned int sensorPin = A1;
 static unsigned int FanPin    = 8;
@@ -56,6 +59,14 @@ void setup()
 
   Serial.begin(115200);
 
+  if (!tempSensor.begin(0x18)) {
+    Serial.println("Cant find Temp Sensor");
+    while(1);
+  }
+
+  Serial.println("Temp sensor found");
+  tempSensor.setResolution(3);
+
   SetTimeTemp();
 
   Preheat();
@@ -67,10 +78,12 @@ void setup()
 
 void loop()
 {
+  tempSensor.wake();
   unsigned int minutesRan = (millis() - startMillis) / 60000;
   
   if(minutesRan < desiredTime){
-    float currentTemp = tempKF.Filter((float)Thermistor(analogRead(sensorPin)));
+    float tempC = tempSensor.readTempC();
+    float currentTemp = tempKF.Filter(tempC);
     
     unsigned long currentMillis = millis();
     float dT = (currentMillis - previousMillis) / 1000.0;
@@ -103,6 +116,7 @@ void loop()
     
     ResetArduino();
   }
+  tempSensor.shutdown_wake(1);
 }
 
 void SetLCDDisplay(String line1, String line2){
@@ -142,7 +156,7 @@ void Preheat(){
     SetLCDDisplay("Preheating:", "Temp: " + String(currentTemp, 1) + "C");
     preheating = currentTemp < desiredTemp;
 
-    Serial.print("Starting T:"); Serial.print(currentTemp); Serial.print(" D: "); Serial.println(desiredTemp);
+    Serial.print("Starting T:"); Serial.print(tempSensor.readTempC()); Serial.print(" D: "); Serial.println(desiredTemp);
     
     DISABLE = preHeatWatch.Check(1.0f, currentTemp);
     
