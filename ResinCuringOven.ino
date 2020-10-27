@@ -1,4 +1,3 @@
-#include "Hardware.h"
 #include "Menu.h"
 #include <math.h>
 #include "PID.h"
@@ -45,8 +44,9 @@ void setup()
   pinMode(Other,      OUTPUT);
   pinMode(LedPanel,   OUTPUT);
   pinMode(4,          INPUT_PULLUP);//Encoder Button
-  pinMode(2,          INPUT_PULLUP);//Encoder pinA
-  pinMode(3,          INPUT_PULLUP);//Encoder pinB
+  pinMode(A0, INPUT); //Pot Pin
+  //pinMode(2,          INPUT_PULLUP);//Encoder pinA
+  //pinMode(3,          INPUT_PULLUP);//Encoder pinB
 
   digitalWrite(FanPin,    HIGH);//Relay controls are inverted logic
   digitalWrite(MotorPin,  HIGH);
@@ -55,8 +55,8 @@ void setup()
   digitalWrite(HeaterPin, LOW);//SSR
   digitalWrite(LedPanel,  LOW);
   
-  attachInterrupt(0, PinA, CHANGE);
-  attachInterrupt(1, PinB, CHANGE);
+  //attachInterrupt(0, PinA, CHANGE);
+  //attachInterrupt(1, PinB, CHANGE);
 
   Serial.begin(115200);
 
@@ -115,7 +115,7 @@ void loop()
     
     while (digitalRead(4))//button click
     { 
-      SetLCDDisplay("Finished...", "Click to reset.");
+      SetLCDDisplay("Finished!", "Reboot System");
       delay(loopTime);
     }
     

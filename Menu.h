@@ -14,24 +14,36 @@ unsigned int selectTemp()
   
   while (selectedTemp == false)
   {
-    if (Encoder(1))
-    {
+    if (analogRead(A0) > 512 ) {
       temp = 80;
       lcd.setCursor(0,1);
       lcd.print(String(temp) + "C");
-      
+
       if(digitalRead(4) == false) selectedTemp = true;
     }
-    else if (!Encoder(1))
-    {
+    else if (analogRead(A0) <= 512) {
       temp = 60;
       lcd.setCursor(0,1);
       lcd.print(String(temp) + "C");
 
       if(digitalRead(4) == false) selectedTemp = true;
     }
-      
-    //ResetEncoder();
+//    if (Encoder(1))
+//    {
+//      temp = 80;
+//      lcd.setCursor(0,1);
+//      lcd.print(String(temp) + "C");
+//      
+//      if(digitalRead(4) == false) selectedTemp = true;
+//    }
+//    else if (!Encoder(1))
+//    {
+//      temp = 60;
+//      lcd.setCursor(0,1);
+//      lcd.print(String(temp) + "C");
+//
+//      if(digitalRead(4) == false) selectedTemp = true;
+//    }
   }
   return (temp);
 }
@@ -46,13 +58,14 @@ unsigned int selectTime()
   while (selectedTime == false)
   {
     
-    Time = Encoder(0);
+    //Time = Encoder(0);
+    Time = map(analogRead(A0), 0, 1022, 15, 180);
 
     //Serial.print("Time:"); Serial.println(Time);
 
-    if(Time <= 0){
-      Time += 15;
-    }
+    //if(Time <= 0){
+      //Time += 15;
+    //}
 
     String val = "";
 
